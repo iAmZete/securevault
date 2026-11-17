@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<div class="sv-page-head">
+  <div>
+    <h1 class="sv-h1">Security audit log</h1>
+    <p class="text-muted mb-0">Read-only view. Document contents are never recorded or accessible here.</p>
+  </div>
+  <span class="sv-readonly">Read-only</span>
+</div>
+
+<div class="sv-panel mb-4">
+  <form method="get" action="{{ url_for('auditor.logs') }}" class="row g-3 align-items-end">
+    <div class="col-md-2">
+      {{ form.username.label(class="form-label") }}
+      {{ form.username(class="form-control", maxlength=64) }}
+    </div>
+    <div class="col-md-3">
+      {{ form.action.label(class="form-label") }}
+      {{ form.action(class="form-select") }}
+    </div>
+    <div class="col-md-2">
+      {{ form.result.label(class="form-label") }}
+      {{ form.result(class="form-select") }}
+    </div>
+    <div class="col-md-2">
+      {{ form.date_from.label(class="form-label") }}
+      {{ form.date_from(class="form-control", type="date") }}
+    </div>
+    <div class="col-md-2">
+      {{ form.date_to.label(class="form-label") }}
+      {{ form.date_to(class="form-control", type="date") }}
+    </div>
+    <div class="col-md-1 d-grid">
+      <button class="btn btn-primary" type="submit">Filter</button>
+    </div>
+  </form>
+  {% if filter_args %}<a class="small d-inline-block mt-2" href="{{ url_for('auditor.logs') }}">Clear filters</a>{% endif %}
+</div>
+
+<div class="sv-panel">
+  <h2 class="sv-h2">Events <span class="sv-count">{{ pagination.total }}</span></h2>
+  {% if events %}
+  <div class="table-responsive">
+  <table class="table sv-table sv-table-compact align-middle">
+    <thead>
+      <tr><th>Timestamp (UTC)</th><th>User</th><th>Action</th><th>File ID</th><th>Source IP</th><th>Result</th><th>Details</th></tr>
+    </thead>
+    <tbody>
+    {% for e in events %}
+      <tr>
+        <td class="text-nowrap">{{ e.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+        <td>{{ e.username or '—' }}{% if e.user_id %} <span class="text-muted small">#{{ e.user_id }}</span>{% endif %}</td>
+        <td><code>{{ e.action }}</code></td>
+        <td>{{ e.file_id if e.file_id is not none else '—' }}</td>
+        <td>{{ e.source_ip or '—' }}</td>
+        <td><span class="sv-status sv-result-{{ e.result }}">{{ e.result }}</span></td>
+        <td class="sv-details">{{ e.details or '' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% if pagination.pages > 1 %}
+  <nav class="d-flex justify-content-between align-items-center mt-3" aria-label="Audit log pages">
+    <span class="small text-muted">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+    <div class="d-flex gap-2">
+      {% if pagination.has_prev %}<a class="btn btn-sm btn-outline-secondary" href="{{ url_for('auditor.logs', page=pagination.prev_num, **filter_args) }}">Previous</a>{% endif %}
+      {% if pagination.has_next %}<a class="btn btn-sm btn-outline-secondary" href="{{ url_for('auditor.logs', page=pagination.next_num, **filter_args) }}">Next</a>{% endif %}
+    </div>
+  </nav>
+  {% endif %}
+  {% else %}
+    <p class="text-muted mb-0">No events match the current filters.</p>
+  {% endif %}
+</div>
+{% endblock %}

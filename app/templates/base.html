@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SecureVault{% endblock %} · SecureVault</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% if current_user.is_authenticated %}
+<nav class="sv-nav">
+  <div class="container d-flex align-items-center gap-4 flex-wrap">
+    <a class="sv-brand" href="{{ url_for('main.index') }}">
+      <span class="sv-brand-mark" aria-hidden="true"></span>SecureVault
+    </a>
+    {% if not current_user.must_change_password %}
+    <ul class="sv-links">
+      {% if current_user.role == 'staff' %}
+        <li><a class="{% if request.blueprint == 'files' %}active{% endif %}" href="{{ url_for('files.index') }}">My documents</a></li>
+      {% elif current_user.role == 'admin' %}
+        <li><a class="{% if request.blueprint == 'admin' %}active{% endif %}" href="{{ url_for('admin.users') }}">User management</a></li>
+      {% elif current_user.role == 'auditor' %}
+        <li><a class="{% if request.blueprint == 'auditor' %}active{% endif %}" href="{{ url_for('auditor.logs') }}">Audit log</a></li>
+      {% endif %}
+    </ul>
+    {% endif %}
+    <div class="ms-auto d-flex align-items-center gap-3">
+      <span class="sv-user">
+        {{ current_user.username }}
+        <span class="sv-role sv-role-{{ current_user.role }}">{{ current_user.role_label }}</span>
+      </span>
+      <a class="sv-navlink" href="{{ url_for('auth.change_password') }}">Password</a>
+      <form method="post" action="{{ url_for('auth.logout') }}" class="m-0">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-sm btn-outline-light">Sign out</button>
+      </form>
+    </div>
+  </div>
+</nav>
+{% endif %}
+
+<main class="{% block main_class %}container py-4{% endblock %}">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="sv-flashes">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category if category in ['success','danger','warning','info'] else 'info' }}" role="alert">{{ message }}</div>
+      {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="sv-footer">
+  <div class="container">
+    SecureVault prototype · MCSC 6002 · Synthetic data only — do not store real personal or health information.
+  </div>
+</footer>
+</body>
+</html>

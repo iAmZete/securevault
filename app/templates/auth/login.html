@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block body_class %}sv-auth{% endblock %}
+{% block main_class %}sv-auth-main{% endblock %}
+{% block content %}
+<div class="sv-auth-card">
+  <div class="sv-auth-head">
+    <span class="sv-brand-mark sv-brand-mark-lg" aria-hidden="true"></span>
+    <h1>SecureVault</h1>
+    <p>Encrypted document storage for confidential case files</p>
+  </div>
+  <form method="post" action="{{ url_for('auth.login') }}" novalidate autocomplete="off">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+      {{ form.username.label(class="form-label") }}
+      {{ form.username(class="form-control", autocomplete="username", autofocus=true, maxlength=64) }}
+    </div>
+    <div class="mb-4">
+      {{ form.password.label(class="form-label") }}
+      {{ form.password(class="form-control", autocomplete="current-password", maxlength=128) }}
+    </div>
+    {{ form.submit(class="btn btn-primary w-100") }}
+  </form>
+  <p class="sv-auth-note">Accounts are issued by an administrator. Five failed attempts lock the account.</p>
+</div>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}My documents{% endblock %}
+{% block content %}
+<div class="sv-page-head">
+  <div>
+    <h1 class="sv-h1">My documents</h1>
+    <p class="text-muted mb-0">Every file is encrypted with AES-256-GCM under its own key and integrity-checked on each access.</p>
+  </div>
+</div>
+
+<div class="sv-panel mb-4">
+  <h2 class="sv-h2">Upload a document</h2>
+  <form method="post" action="{{ url_for('files.upload') }}" enctype="multipart/form-data" class="sv-upload">
+    {{ upload_form.hidden_tag() }}
+    {{ upload_form.file(class="form-control", accept=".pdf,.docx,.txt,.png,.jpg,.jpeg", required=true) }}
+    {{ upload_form.submit(class="btn btn-primary") }}
+  </form>
+  <div class="form-text">Allowed: {{ allowed }} · Max {{ max_mb }} MB · File content must match its extension.</div>
+</div>
+
+<div class="sv-panel">
+  <h2 class="sv-h2">Stored files <span class="sv-count">{{ files|length }}</span></h2>
+  {% if files %}
+  <div class="table-responsive">
+    <table class="table sv-table align-middle">
+      <thead>
+        <tr>
+          <th>Name</th><th>Type</th><th>Size</th><th>Uploaded (UTC)</th><th>Integrity</th><th>SHA-256</th><th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for f in files %}
+        <tr>
+          <td class="sv-filename">{{ f.original_name }}</td>
+          <td><span class="sv-ext">{{ f.extension|upper }}</span></td>
+          <td>{{ f.size_display }}</td>
+          <td>{{ f.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          <td>
+            {% if f.integrity_status == 'verified' %}
+              <span class="sv-status sv-status-ok">Verified</span>
+            {% else %}
+              <span class="sv-status sv-status-fail">Failed</span>
+            {% endif %}
+          </td>
+          <td><code class="sv-hash" title="{{ f.sha256 }}">{{ f.sha256[:12] }}…</code></td>
+          <td class="text-end sv-actions">
+            {% if f.integrity_status == 'verified' %}
+              <a class="btn btn-sm btn-outline-primary" href="{{ url_for('files.download', file_id=f.id) }}">Download</a>
+            {% else %}
+              <button class="btn btn-sm btn-outline-secondary" disabled>Blocked</button>
+            {% endif %}
+            <form method="post" action="{{ url_for('files.verify', file_id=f.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm btn-outline-secondary">Verify</button>
+            </form>
+            <form method="post" action="{{ url_for('files.delete', file_id=f.id) }}" data-confirm="Permanently delete this file? Its encryption key will be destroyed.">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="text-muted mb-0">No documents yet. Upload one above.</p>
+  {% endif %}
+</div>
+{% endblock %}
